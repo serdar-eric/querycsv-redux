@@ -50,17 +50,17 @@ VERSION = "4.1.0"
 # Modified version taken from sqliteplus.py by Florent Xicluna
 def pretty_print(rows, fp):
     headers = rows.pop(0)
-    rows = [[unicode(col) for col in row] for row in rows]
+    rows = [[str(col) for col in row] for row in rows]
 
     rcols = range(len(headers))
 
-    colwidth = [max(0, len(headers[i])) for i in xrange(len(headers))]
-    for y in xrange(len(rows)):
-        for x in xrange(len(headers)):
+    colwidth = [max(0, len(headers[i])) for i in range(len(headers))]
+    for y in range(len(rows)):
+        for x in range(len(headers)):
             colwidth[x] = max(colwidth[x], len(rows[y][x]))
 
     # Header
-    fp.write(' ' + ' | '.join([unicode(headers[i]).ljust(colwidth[i])
+    fp.write(' ' + ' | '.join([str(headers[i]).ljust(colwidth[i])
                                for i in rcols]) + '\n')
 
     # Seperator
@@ -104,14 +104,14 @@ def read_sqlfile(filename):
 
 def as_list(item):
     """Wrap `item` in a list if it isn't already one."""
-    if isinstance(item, (str, unicode)):
+    if isinstance(item, (bytes, str)):
         return [item]
     return item
 
 
 @contextmanager
 def as_connection(db):
-    if isinstance(db, (str, unicode)):
+    if isinstance(db, (bytes, str)):
         with sqlite3.connect(db) as conn:
             yield conn
     else:
@@ -143,12 +143,12 @@ def import_csv(db, filename, table_name=None, overwrite=False):
 
         dialect = csv.Sniffer().sniff(open(filename, 'r').readline())
         reader = csv.reader(open(filename, 'r'), dialect)
-        column_names = reader.next()
+        column_names = next(reader)
         colstr = ",".join('[{0}]'.format(col) for col in column_names)
         conn.execute('drop table if exists %s;' % table_name)
         conn.execute('create table %s (%s);' % (table_name, colstr))
         for row in reader:
-            vals = [unicode(cell, 'utf-8') for cell in row]
+            vals = [cell for cell in row]
             params = ','.join('?' for i in range(len(vals)))
             sql = 'insert into %s values (%s);' % (table_name, params)
             conn.execute(sql, vals)
